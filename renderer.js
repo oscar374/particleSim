@@ -6,6 +6,12 @@ let width = window.innerWidth;
 let height = window.innerHeight;
 const ctx = canvas.getContext('2d');
 
+//############## HTML ELEMENTS #################
+let leftUI = document.getElementById("leftUI");
+let rightUI = document.getElementById("rightUI");
+let cameraPosText = document.getElementById("cameraPos");
+//############## HTML ELEMENTS #################
+
 let linePositions = [
     {
         p1: new Vector3(-SETTINGS.LINE_LENGTH, 0, 0),
@@ -53,42 +59,24 @@ function start(){
 start();
 
 function update(){
+    resizeCanvas();
     clear();
-    displayLines();
+    if (debugLines)
+        displayLines();
+    updateCameraPosText();
 
-    const radius = 40;
-    const latSteps = 50; 
-    const lonSteps = 24; 
-    const spherePoints = [];
-
-    for (let i = 0; i <= latSteps; i++) {
-        const theta = (i / latSteps) * Math.PI;
-
-        for (let j = 0; j <= lonSteps; j++) {
-            const phi = (j / lonSteps) * 2 * Math.PI;
-        
-            const x = radius * Math.sin(theta) * Math.cos(phi);
-            const y = radius * Math.sin(theta) * Math.sin(phi);
-            const z = radius * Math.cos(theta);
-
-            spherePoints.push(new Vector3(x, y, z));
-        }
-    }
-
-    spherePoints.forEach((pt) => {
-        point(toScreen(project(pt)), 'cyan');
-    });
+    point(toScreen(project(new Vector3(30, 30, 30))), 20, 'red');
 
     movement();
 }
 
-//################ START AND UPDATE functions ################
-
-let cameraPosition = new Vector3(0, 10, -40);
-
 setInterval(() => {
     update();   
 }, 1000 / SETTINGS.FPS);
+
+//################ START AND UPDATE functions ################
+
+let cameraPosition = new Vector3(0, 10, -70);
 
 function displayLines(){
     linePositions.forEach(element => {
@@ -125,21 +113,28 @@ function clear(){
     ctx.fillRect(0, 0, width, height);
 }
 
-function point({x, y}, color){
+function point({x, y, depth}, radius, color) {
+    const referenceDistance = 50;
+    const scale = referenceDistance / depth;
+
+    const apparentRadius = radius * scale;
+
+    if (apparentRadius < 0.1) return;
+
     ctx.beginPath();
-    ctx.arc(x - SETTINGS.PARTICLE_SIZE / 2, y - SETTINGS.PARTICLE_SIZE / 2, SETTINGS.PARTICLE_SIZE , 40, 0, 2 * Math.PI);
+    ctx.arc(x, y, apparentRadius, 0, 2 * Math.PI);
     ctx.fillStyle = color;
-    ctx.strokeStyle = color;
     ctx.fill();
-    ctx.stroke();
 }
 
 function toScreen(p) {
     const x = p?.x ?? 100000;
     const y = p?.y ?? 100000;
+    const depth = p?.depth ?? 100000;
     return {
         x: (x + 1) / 2 * width,
-        y: (1 - (y + 1) / 2) * height
+        y: (1 - (y + 1) / 2) * height,
+        depth:  depth
     }
 }
 
@@ -154,7 +149,8 @@ function project(p){
 
     return {
         x: (p.x - cameraPosition.x) / depth / aspectRatio, 
-        y: (p.y - cameraPosition.y) / depth
+        y: (p.y - cameraPosition.y) / depth,
+        depth: depth
     }
 }
 
@@ -182,7 +178,31 @@ function movement(){
 
 
 
-//####################### UI HANDLE ##########################
+//####################### FUNCTIONAL KEYS HANDLES ##########################
 
-let leftUIOpen = false;
-let rightUIOpen = true;
+let UIopen = false;
+let debugLines = true;
+
+document.addEventListener('keydown', function(event) {
+    if(event.keyCode == "81"){  // Q
+        if(!UIopen){
+            leftUI.style.left = "0px";
+            rightUI.style.right = "0px";
+            UIopen = true;
+        } else {
+            leftUI.style.left = "-20vw";
+            rightUI.style.right = "-20vw";
+            UIopen = false;
+        }     
+    }else if (event.keyCode == "76"){  // L
+        if(!debugLines) debugLines = true;
+        else debugLines = false;
+    }
+});
+
+
+
+
+function updateCameraPosText(){
+    cameraPosText.innerHTML = "Position: X:" + cameraPosition.x + " Y:" + cameraPosition.y + " Z:" + cameraPosition.z;
+}
