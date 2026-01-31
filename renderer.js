@@ -1,6 +1,6 @@
 import SETTINGS from "./settings.js";
 import Vector3 from "./vector3.js";
-
+import object from "./object.js";
 
 let width = window.innerWidth;
 let height = window.innerHeight;
@@ -11,6 +11,24 @@ let leftUI = document.getElementById("leftUI");
 let rightUI = document.getElementById("rightUI");
 let cameraPosText = document.getElementById("cameraPos");
 //############## HTML ELEMENTS #################
+
+const imageCache = {};
+
+
+// ############# Image loading ###############
+function getPreloadedImage(url) {
+    if (!imageCache[url]) {
+        const img = new Image();
+        img.src = url;
+        imageCache[url] = { img, loaded: false };
+        img.onload = () => {
+            imageCache[url].loaded = true;
+        };
+    }
+    return imageCache[url];
+}
+// ############# Image loading ###############
+
 
 let linePositions = [
     {
@@ -65,7 +83,8 @@ function update(){
         displayLines();
     updateCameraPosText();
 
-    point(toScreen(project(new Vector3(30, 30, 30))), 20, 'red');
+    point(toScreen(project(new Vector3(-100, 600, 2000))), 10000, 'assets/images/blackHoles/bHole1.png');
+    point(toScreen(project(new Vector3(30, 30, 30))), 20, 'assets/images/planets/earth.png');
 
     movement();
 }
@@ -113,18 +132,24 @@ function clear(){
     ctx.fillRect(0, 0, width, height);
 }
 
-function point({x, y, depth}, radius, color) {
+function point({x, y, depth}, radius, imageURL) {
     const referenceDistance = 50;
     const scale = referenceDistance / depth;
-
     const apparentRadius = radius * scale;
 
     if (apparentRadius < 0.1) return;
 
-    ctx.beginPath();
-    ctx.arc(x, y, apparentRadius, 0, 2 * Math.PI);
-    ctx.fillStyle = color;
-    ctx.fill();
+    const cached = getPreloadedImage(imageURL);
+        if (cached.loaded) {
+        const size = apparentRadius * 2;
+        ctx.drawImage(
+            cached.img, 
+            x - apparentRadius, 
+            y - apparentRadius,  
+            size,              
+            size             
+        );
+    }
 }
 
 function toScreen(p) {

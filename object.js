@@ -1,10 +1,10 @@
 
 
-export default class particle {
+export default class object {
     constructor(x, y, z, color, mass){
         let outPosition = new Vector3(0, 0, 0);
         
-        function update(deltaTime, otherParticles){
+        function update(deltaTime, otherObjects){
              
         }
     }

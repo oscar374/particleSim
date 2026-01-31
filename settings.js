@@ -1,5 +1,5 @@
 const SETTINGS = {
-  BACKGROUND: "#121212",
+  BACKGROUND: "black",
   PARTICLE_SIZE: 4,
   LINE_COLOR: "cyan",
   LINE_LENGTH: 20000,
