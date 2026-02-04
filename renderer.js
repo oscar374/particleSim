@@ -149,8 +149,17 @@ function renderObject(obj){
     }
 }
 
-function renderObjectFlare(obj, projected, visualRadius){
-    point(toScreen(projected), visualRadius * 100, obj.flare);
+function renderObjectFlare(obj, projected, visualRadius) {
+    const distance = vectorDistance(cameraPosition, obj.position);
+    
+    const fadeThreshold = visualRadius * 2;
+
+    let opacity = distance / fadeThreshold;
+    
+    if (opacity > 1) opacity = 1;
+    if (opacity < 0) opacity = 0;
+
+    point(toScreen(projected), visualRadius * 100, obj.flare, opacity);
 }
 
 function drawLine({x: x1, y: y1}, {x: x2, y: y2}){
@@ -161,7 +170,7 @@ function drawLine({x: x1, y: y1}, {x: x2, y: y2}){
     ctx.stroke();
 }
 
-function point({x, y, depth}, radius, imageURL) {
+function point({x, y, depth}, radius, imageURL, opacity = 1) {
     const referenceDistance = 50;
     const scale = referenceDistance / depth;
     const apparentRadius = radius * scale;
@@ -169,8 +178,12 @@ function point({x, y, depth}, radius, imageURL) {
     if (apparentRadius < 0.1) return;
 
     const cached = getPreloadedImage(imageURL);
-        if (cached.loaded) {
+    if (cached.loaded) {
         const size = apparentRadius * 2;
+        ctx.save(); 
+        
+        ctx.globalAlpha = opacity; 
+
         ctx.drawImage(
             cached.img, 
             x - apparentRadius, 
@@ -178,6 +191,8 @@ function point({x, y, depth}, radius, imageURL) {
             size,              
             size             
         );
+
+        ctx.restore(); 
     }
 }
 
